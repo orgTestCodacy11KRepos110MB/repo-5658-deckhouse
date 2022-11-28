@@ -18,5 +18,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: enc_hidden
-        path: |
-          env.gpg
+        path: env.gpg
