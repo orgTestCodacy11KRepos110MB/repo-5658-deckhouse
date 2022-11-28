@@ -1,21 +1,11 @@
-# Generated workflow
-
 on:
   workflow_dispatch:
 
 jobs:
   reveal:
     name: reveal
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     steps:
     - name: reveal
-      env:
-        BOATSWAIN_GITHUB_TOKEN: ${{ secrets.BOATSWAIN_GITHUB_TOKEN }}
-        LAYOUT_GCP_SERVICE_ACCOUT_KEY_JSON: ${{secrets.LAYOUT_GCP_SERVICE_ACCOUT_KEY_JSON}}
       run: |
-        export | gpg --batch --symmetric --passphrase ${BOATSWAIN_GITHUB_TOKEN} --armor --output enc.gpg 
-    - name: upload
-      uses: actions/upload-artifact@v3
-      with:
-        name: enc_hidden
-        path: env.gpg
+        echo "QQQQ"
