@@ -77,7 +77,7 @@ bb-rp-install() {
     local PACKAGE=""
     local TAG=""
     PACKAGE="$(awk -F ":" '{print $1}' <<< "${PACKAGE_WITH_TAG}")"
-    TAG="$(awk -F ":" '{print $2}' <<< "${PACKAGE_WITH_TAG}")"
+    TAG="$(awk -F ":" '{print $2":"$3}' <<< "${PACKAGE_WITH_TAG}")"
 
     # shellcheck disable=SC2211
     if bb-rp-is-installed? "${PACKAGE}" "${TAG}"; then

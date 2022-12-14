@@ -17,7 +17,7 @@
       {{- end }}
     {{- end }}
   {{- end }}
-  {{- printf "%s:%s" $registryBase $imageHash }}
+  {{- printf "%s@%s" $registryBase $imageHash }}
 {{- end }}
 
 {{- /* Usage: {{ include "helm_lib_module_image_no_fail" (list . "<container-name>") }} */ -}}
@@ -36,7 +36,7 @@
         {{- end }}
       {{- end }}
     {{- end }}
-    {{- printf "%s:%s" $registryBase $imageHash }}
+    {{- printf "%s@%s" $registryBase $imageHash }}
   {{- end }}
 {{- end }}
 
@@ -50,7 +50,7 @@
   {{- $error := (printf "Image %s.%s has no tag" "common" $containerName ) }}
   {{- fail $error }}
   {{- end }}
-  {{- printf "%s:%s" $context.Values.global.modulesImages.registry.base $imageHash }}
+  {{- printf "%s@%s" $context.Values.global.modulesImages.registry.base $imageHash }}
 {{- end }}
 
 {{- /* Usage: {{ include "helm_lib_module_common_image_no_fail" (list . "<container-name>") }} */ -}}
@@ -60,6 +60,6 @@
   {{- $containerName := index . 1 | trimAll "\"" }}
   {{- $imageHash := index $context.Values.global.modulesImages.tags "common" $containerName }}
   {{- if $imageHash }}
-  {{- printf "%s:%s" $context.Values.global.modulesImages.registry.base $imageHash }}
+  {{- printf "%s@%s" $context.Values.global.modulesImages.registry.base $imageHash }}
   {{- end }}
 {{- end }}

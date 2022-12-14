@@ -22,20 +22,20 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
-	"github.com/flant/addon-operator/pkg/module_manager/go_hook/metrics"
-	"github.com/flant/addon-operator/sdk"
-	"github.com/flant/shell-operator/pkg/kube_events_manager/types"
-	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/utils/pointer"
-
 	"github.com/deckhouse/deckhouse/go_lib/dependency"
 	"github.com/deckhouse/deckhouse/go_lib/dependency/cr"
 	"github.com/deckhouse/deckhouse/go_lib/hooks/update"
 	"github.com/deckhouse/deckhouse/modules/002-deckhouse/hooks/internal/apis/v1alpha1"
 	"github.com/deckhouse/deckhouse/modules/002-deckhouse/hooks/internal/updater"
+	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
+	"github.com/flant/addon-operator/pkg/module_manager/go_hook/metrics"
+	"github.com/flant/addon-operator/sdk"
+	"github.com/flant/shell-operator/pkg/kube_events_manager/types"
+	gcr "github.com/google/go-containerregistry/pkg/name"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/pointer"
 )
 
 var _ = sdk.RegisterFunc(&go_hook.HookConfig{
@@ -116,24 +116,23 @@ type deckhousePodInfo struct {
 // it is set via dhctl, which does not know anything about releases and tags
 // We can use this bootstrap image for applying first release without any requirements (like update windows, canary, etc)
 func (dpi deckhousePodInfo) isBootstrapImage() bool {
-	colonIndex := strings.LastIndex(dpi.Image, ":")
-	if colonIndex == -1 {
-		return false
+	isDigest := strings.LastIndex(dpi.Image, "@sha256")
+	if isDigest != -1 {
+		_, err := gcr.NewDigest(dpi.Image)
+		if err != nil {
+			return false
+		}
+	} else {
+		tag, err := gcr.NewTag(dpi.Image)
+		if err != nil {
+			return false
+		}
+		switch strings.ToLower(tag.TagStr()) {
+		case "alpha", "beta", "early-access", "stable", "rock-solid":
+			return true
+		}
 	}
-
-	tag := dpi.Image[colonIndex+1:]
-
-	if tag == "" {
-		return false
-	}
-
-	switch strings.ToLower(tag) {
-	case "alpha", "beta", "early-access", "stable", "rock-solid":
-		return true
-
-	default:
-		return false
-	}
+	return false
 }
 
 const (
@@ -380,12 +379,12 @@ func tagUpdate(input *go_hook.HookInput, dc dependency.Container, deckhousePod *
 	}
 	imageHash := deckhousePod.ImageID[idSplitIndex+1:]
 
-	imageSplitIndex := strings.LastIndex(deckhousePod.Image, ":")
-	if imageSplitIndex == -1 {
-		return fmt.Errorf("image tag not found: %s", deckhousePod.Image)
+	imageRepoTag, err := gcr.NewTag(deckhousePod.Image)
+	if err != nil {
+		return fmt.Errorf("incorrect image: %s", deckhousePod.Image)
 	}
-	repo := deckhousePod.Image[:imageSplitIndex]
-	tag := deckhousePod.Image[imageSplitIndex+1:]
+	repo := imageRepoTag.Context().Name()
+	tag := imageRepoTag.TagStr()
 
 	dockerCfg := input.Values.Get("global.modulesImages.registry.dockercfg").String()
 

@@ -17,15 +17,15 @@ limitations under the License.
 package hooks
 
 import (
-	"errors"
-	"strings"
-
+	"fmt"
 	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
 	"github.com/flant/addon-operator/sdk"
 	"github.com/flant/shell-operator/pkg/kube/object_patch"
 	"github.com/flant/shell-operator/pkg/kube_events_manager/types"
+	gcr "github.com/google/go-containerregistry/pkg/name"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"strings"
 )
 
 const (
@@ -109,11 +109,20 @@ func deploymentFilterFunc(obj *unstructured.Unstructured) (go_hook.FilterResult,
 
 	for _, cont := range dep.Spec.Template.Spec.Containers {
 		if cont.Name == bashibleName {
-			imageSplitIndex := strings.LastIndex(cont.Image, ":")
-			if imageSplitIndex == -1 {
-				return nil, errors.New("image tag not found")
+			isDigest := strings.LastIndex(cont.Image, "@sha256")
+			if isDigest != -1 {
+				digest, err := gcr.NewDigest(cont.Image)
+				if err != nil {
+					return nil, fmt.Errorf("incorrect image %s in bashible apiserver", cont.Image)
+				}
+				deploymentImageTag = digest.DigestStr()
+			} else {
+				tag, err := gcr.NewTag(cont.Image)
+				if err != nil {
+					return nil, fmt.Errorf("incorrect image %s in bashible apiserver", cont.Image)
+				}
+				deploymentImageTag = tag.TagStr()
 			}
-			deploymentImageTag = cont.Image[imageSplitIndex+1:]
 		}
 	}
 

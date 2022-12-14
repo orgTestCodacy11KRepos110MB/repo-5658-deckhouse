@@ -698,6 +698,8 @@ dependencies:
     imports:
     - type: ImageTag
       targetEnv: MODULES_IMAGES_TAGS_{{ $ModuleNameCamel }}_{{ $ImageNameCamel }}
+    - type: ImageDigest
+      targetEnv: MODULES_IMAGES_ID_{{ $ModuleNameCamel }}_{{ $ImageNameCamel }}
 {{- end }}
 import:
 - artifact: jq
@@ -706,12 +708,21 @@ import:
   before: setup
 shell:
   setup:
+  - echo "build images_tags.json"
   - |
-    env | grep MODULES_IMAGES_TAGS | jq -Rn '
+    env | grep MODULES_IMAGES_TAGS | cut -f 4- -d '_' > tags_wo_sha.lst
+    touch tags_full.lst
+    for line in `env | grep MODULES_IMAGES_ID_`
+    do
+      tagKey=`echo $line | cut -f 4- -d '_' | cut -f 1 -d '='`
+      imageId=`echo $line | cut -f 4- -d '_' | cut -f 2 -d '='`
+      echo $tagKey'='$imageId >> tags_full.lst
+    done
+    cat tags_full.lst | jq -Rn '
       reduce inputs as $i (
         {};
         . * (
-          $i | ltrimstr("MODULES_IMAGES_TAGS_") | sub("=";"_") |
+          $i | sub("=";"_") |
           split("_") as [$moduleName, $imageName, $tag] |
           {($moduleName): {($imageName): $tag}}
         )

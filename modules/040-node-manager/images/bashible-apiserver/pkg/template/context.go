@@ -343,6 +343,8 @@ func (c *BashibleContext) update(src string) {
 		return
 	}
 
+	klog.Infof(fmt.Sprintf("contextSynced: %t, registrySynced: %t", c.contextSynced, c.registrySynced))
+
 	if !c.contextSynced || !c.registrySynced {
 		return
 	}

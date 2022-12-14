@@ -24,9 +24,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
-
 	"github.com/deckhouse/deckhouse/modules/002-deckhouse/hooks/internal/apis/v1alpha1"
+	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
 )
 
 type NotificationConfig struct {

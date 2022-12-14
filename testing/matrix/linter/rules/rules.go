@@ -190,29 +190,25 @@ func containerImageTagCheck(object storage.StoreObject, containers []v1.Containe
 			continue
 		}
 
-		t, err := name.NewTag(c.Image)
-		if err != nil {
-			return errors.NewLintRuleError(
-				"CONTAINER003",
-				object.Identity()+"; container = "+c.Name,
-				nil,
-				"Can't parse an image for container: %v", err,
-			)
+		cutPos := strings.LastIndex(c.Image, "@imageHash")
+		if cutPos == -1 {
+			cutPos = strings.LastIndex(c.Image, ":")
 		}
-		registry := fmt.Sprintf("%s/%s", t.RegistryStr(), t.RepositoryStr())
-		tag := t.TagStr()
-		if registry != defaultRegistry {
+
+		repo, err := name.NewRepository(c.Image[0:cutPos])
+		if err != nil {
 			return errors.NewLintRuleError("CONTAINER003",
 				object.Identity()+"; container = "+c.Name,
 				nil,
-				"All images must be deployed from the same default registry - "+defaultRegistry,
+				"Cannot parse repository from path - "+c.Image,
 			)
 		}
-		if !strings.HasPrefix(tag, "imageHash-") {
-			return errors.NewLintRuleError("CONTAINER004",
+
+		if repo.Name() != defaultRegistry {
+			return errors.NewLintRuleError("CONTAINER003",
 				object.Identity()+"; container = "+c.Name,
 				nil,
-				"Image tag should start from `imageHash-`",
+				"All images must be deployed from the same default registry: "+defaultRegistry+" current:"+repo.RepositoryStr(),
 			)
 		}
 	}

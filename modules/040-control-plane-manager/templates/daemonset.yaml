@@ -242,7 +242,7 @@ spec:
 {{- end }}
 {{- range $name, $imageTag := $images }}
       - name: image-holder-{{ $name | kebabcase }}
-        image: "{{ $.Values.global.modulesImages.registry.base }}:{{ $imageTag }}"
+        image: "{{ $.Values.global.modulesImages.registry.base }}@{{ $imageTag }}"
         command:
         - /pause
   {{- if not ( $.Values.global.enabledModules | has "vertical-pod-autoscaler-crd") }}
