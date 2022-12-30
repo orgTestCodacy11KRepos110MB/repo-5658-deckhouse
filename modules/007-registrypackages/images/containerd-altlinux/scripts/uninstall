@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2021 Flant JSC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,4 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-bb-apt-remove unattended-upgrades
+set -Eeo pipefail
+yum versionlock delete container-selinux containerd.io
+rpm -e container-selinux containerd.io

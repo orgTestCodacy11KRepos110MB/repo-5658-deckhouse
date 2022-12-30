@@ -14,6 +14,6 @@
 
 {{- if eq .runType "ImageBuilding" }}
 
-bb-apt-dist-upgrade
+bb-apt-rpm-dist-upgrade
 
 {{- end }}
