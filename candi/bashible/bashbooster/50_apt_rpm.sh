@@ -28,9 +28,9 @@ bb-apt-rpm-repo?() {
     cat /etc/apt/sources.list /etc/apt/sources.list.d/* 2> /dev/null | grep -v '^#' | grep -qw "$REPO_PART"
 }
 
-bb-apt-rpm-key-add() {
-    apt-key add -
-}
+# bb-apt-rpm-key-add() {
+#     apt-key add -
+# }
 
 bb-apt-rpm-repo-add() {
     local REPO_HASH="$(sed -E -e 's/[ \t]+/;;/g' <<< "${@}")"
