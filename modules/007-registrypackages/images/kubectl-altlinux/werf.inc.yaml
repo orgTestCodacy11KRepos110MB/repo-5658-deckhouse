@@ -32,6 +32,6 @@ shell:
   beforeInstall:
   - apk add --no-cache curl
   setup:
-  - curl -sfL https://dl.k8s.io/release/v{{ $version }}.{{ $$patch }}/bin/linux/amd64/kubectl  --output /kubectl
+  - curl -sfL https://dl.k8s.io/release/v{{ $version }}.{{ $patch }}/bin/linux/amd64/kubectl  --output /kubectl
   - chmod +x /kubectl
 {{- end }}
