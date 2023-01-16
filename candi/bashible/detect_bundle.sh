@@ -42,6 +42,13 @@ case "$ID" in
     >&2 echo "ERROR: ${PRETTY_NAME} is not supported."
     exit 1
   ;;
+  altlinux)
+    case "$VERSION_ID" in p10)
+      echo "altlinux" && exit 0 ;;
+    esac
+    >&2 echo "ERROR: ${PRETTY_NAME} is not supported."
+    exit 1
+  ;;
   "")
     >&2 echo "ERROR: Can't determine OS! No ID in /etc/os-release."
     exit 1
