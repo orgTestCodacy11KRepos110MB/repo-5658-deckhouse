@@ -16,7 +16,7 @@ import:
   before: setup
 docker:
   LABEL:
-    distro: ubuntu
+    distro: altlinux
     version: all
     kubelet: {{ printf "%s.%s" $version $patch }}
 ---

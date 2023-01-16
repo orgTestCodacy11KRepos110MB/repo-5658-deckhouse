@@ -27,7 +27,7 @@ import:
   before: setup
 docker:
   LABEL:
-    distro: debian
+    distro: altlinux
   {{- $distroname := regexSplit "-" $image_version -1 | last }}
   {{- range $key, $value := $altlinux_versions }}
     {{- if eq $value $distroname }}
@@ -52,4 +52,3 @@ shell:
   - VERSION="$(sed "s/-${DISTRO}//" <<< "{{ $version | replace "=" "_" }}")"
   - curl -sfL http://ftp.altlinux.org/pub/distributions/ALTLinux/p10/branch/files/x86_64/RPMS/containerd-1.6.9-alt1.x86_64.rpm --output /containerd_amd64.deb #TODO
 {{- end }}
-
