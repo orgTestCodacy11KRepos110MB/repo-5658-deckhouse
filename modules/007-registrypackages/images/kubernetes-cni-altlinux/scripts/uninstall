@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2021 Flant JSC
+# Copyright 2022 Flant JSC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,5 +14,4 @@
 # limitations under the License.
 
 set -Eeo pipefail
-apt-get install ./containerd_amd64.deb
-echo 'RPM::Hold { containerd; };' >> /etc/apt/apt.conf.d/90-containerd-hold.conf
+rm -f /usr/local/bin/{bandwidth,bridge,dhcp,firewall,host-device,host-local,ipvlan,loopback,macvlan,portmap,ptp,sbr,static,tuning,vlan,vrf}
