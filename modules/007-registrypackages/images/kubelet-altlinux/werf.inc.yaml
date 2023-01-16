@@ -33,7 +33,7 @@ shell:
   - apt-get update
   - apt-get install -y curl
   setup:
-  - curl -sfL https://dl.k8s.io/release/v{{ $version }}/bin/linux/amd64/kubelet --output /kubelet
+  - curl -sfL https://dl.k8s.io/release/v{{ $version }}.{{ $$patch }}/bin/linux/amd64/kubelet --output /kubelet
   - chmod +x /kubelet
   - curl -sfL https://raw.githubusercontent.com/kubernetes/release/v0.14.0/cmd/kubepkg/templates/latest/deb/kubelet/lib/systemd/system/kubelet.service | sed 's/\/usr\/bin\/kubelet/\/usr\/local\/bin\/kubelet/' > /kubelet.service
 {{- end }}
