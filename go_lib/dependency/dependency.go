@@ -162,9 +162,9 @@ func (dc *dependencyContainer) MustGetK8sClient(options ...k8s.Option) k8s.Clien
 }
 
 func (dc *dependencyContainer) GetRegistryClient(repo string, options ...cr.Option) (cr.Client, error) {
-	if dc.isTestEnvironment() {
-		return TestDC.GetRegistryClient(repo, options...)
-	}
+	// if dc.isTestEnvironment() {
+	// 	return TestDC.GetRegistryClient(repo, options...)
+	// }
 
 	// Maybe we should use multitone here
 	// if dc.crClient != nil {
