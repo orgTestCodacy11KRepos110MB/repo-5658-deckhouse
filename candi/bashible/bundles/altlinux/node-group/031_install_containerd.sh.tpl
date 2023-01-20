@@ -24,31 +24,6 @@ post-install() {
 {{- end }}
 }
 
-if bb-apt-package? docker-ce || bb-apt-package? docker.io; then
-  bb-deckhouse-get-disruptive-update-approval
-  if systemctl is-active -q kubelet.service; then
-    systemctl stop kubelet.service
-  fi
-
-  bb-log-info "Setting reboot flag due to cri being updated"
-  bb-flag-set reboot
-
-  # Stop docker containers if they run
-  docker stop $(docker ps -q) || true
-  systemctl stop docker.service
-  systemctl stop containerd.service
-  # Kill running containerd-shim processes
-  kill $(ps ax | grep containerd-shim | grep -v grep |awk '{print $1}') 2>/dev/null || true
-  kill -9 $(ps ax | grep containerd-shim | grep -v grep |awk '{print $1}') 2>/dev/null || true
-  # Remove mounts
-  umount $(mount | grep "/run/containerd" | cut -f3 -d" ") 2>/dev/null || true
-  bb-rp-remove docker-ce containerd-io
-  bb-apt-remove docker.io docker-ce containerd-io
-  rm -rf /var/lib/containerd/ /etc/docker /etc/containerd/config.toml
-  # Old version of pod kubelet-eviction-thresholds-exporter in cri=Docker mode mounts /var/run/containerd/containerd.sock, /var/run/containerd/containerd.sock will be a directory and newly installed containerd won't run. Same thing with crictl.
-  rm -rf /var/run/containerd /usr/local/bin/crictl
-  rm -rf /var/lib/docker/ /var/run/docker.sock
-fi
 
 {{- range $key, $value := index .k8s .kubernetesVersion "bashible" "altlinux" }}
   {{- $altlinuxVersion := toString $key }}
@@ -66,7 +41,7 @@ if [[ -z $desired_version ]]; then
 fi
 
 should_install_containerd=true
-version_in_use="$(dpkg -l containerd.io 2>/dev/null | grep -E "(hi|ii)\s+(containerd.io)" | awk '{print $2"="$3}' || true)"
+version_in_use="$(rpm -q containerd | head -1 || true)"
 if test -n "$allowed_versions_pattern" && test -n "$version_in_use" && grep -Eq "$allowed_versions_pattern" <<< "$version_in_use"; then
   should_install_containerd=false
 fi
