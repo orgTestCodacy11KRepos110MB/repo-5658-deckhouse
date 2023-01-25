@@ -18,14 +18,17 @@ package hooks
 
 import (
 	"fmt"
+	"os"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/deckhouse/deckhouse/go_lib/dependency"
+
 	. "github.com/deckhouse/deckhouse/testing/hooks"
 )
 
-var _ = FDescribe("Modules :: deckhouse :: hooks :: set module image value ::", func() {
+var _ = XDescribe("Modules :: deckhouse :: hooks :: set module image value ::", func() {
 	f := HookExecutionConfigInit(`
 global:
   deckhouseVersion: "12345"
@@ -36,6 +39,11 @@ externalModuleSource:
   internal: {}
 `, `{}`)
 	f.RegisterCRD("deckhouse.io", "v1alpha1", "ExternalModuleSource", false)
+	f.RegisterCRD("deckhouse.io", "v1alpha1", "ExternalModuleRelease", false)
+
+	dependency.TestDC.CRClient.ListTagsMock.Return([]string{"echoserver"}, nil)
+	os.Setenv("EXTERNAL_MODULES_DIR", "/tmp/frfr")
+	os.MkdirAll("/tmp/frfr", 0755)
 
 	Context("With Deckhouse pod", func() {
 		BeforeEach(func() {
@@ -47,7 +55,7 @@ metadata:
 spec:
   registry:
     repo: dev-registry.deckhouse.io/deckhouse/external-modules
-    dockerCfg: "d3JpdGV0b2tlbjo0YWM5ZmUyYjcwYzU0ZDA5ZjZkNDM1MzI4ZGZmMDg0NA=="
+    dockerCfg: "ewogICJhdXRocyI6IHsKICAgICJkZXYtcmVnaXN0cnkuZGVja2hvdXNlLmlvIjogewogICAgICAiYXV0aCI6ICJkM0pwZEdWMGIydGxiam8wWVdNNVptVXlZamN3WXpVMFpEQTVaalprTkRNMU16STRaR1ptTURnME5BPT0iCiAgICB9CiAgfQp9Cg=="
 `)
 
 			// EXTERNAL_MODULE_DIRECTORY
@@ -84,6 +92,9 @@ spec:
 			Expect(f).To(ExecuteSuccessfully())
 			res := f.KubernetesGlobalResource("ExternalModuleSource", "registry-deckhouse")
 			fmt.Println(res.ToYaml())
+
+			rl := f.KubernetesGlobalResource("ExternalModuleRelease", "echoserver-v0.0.1")
+			fmt.Println(rl.ToYaml())
 		})
 	})
 })

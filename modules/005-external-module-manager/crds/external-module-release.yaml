@@ -30,6 +30,9 @@ spec:
               required:
                 - version
               properties:
+                moduleName:
+                  type: string
+                  description: Module name.
                 version:
                   type: string
                   description: Module version.

@@ -38,6 +38,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/pointer"
 
+	"github.com/deckhouse/deckhouse/modules/005-external-module-manager/hooks/internal/apis/v1alpha1"
+
 	"github.com/deckhouse/deckhouse/go_lib/dependency/cr"
 
 	"github.com/deckhouse/deckhouse/go_lib/dependency"
@@ -63,7 +65,7 @@ var _ = sdk.RegisterFunc(&go_hook.HookConfig{
 }, dependency.WithExternalDependencies(xxx))
 
 func filterSource(obj *unstructured.Unstructured) (go_hook.FilterResult, error) {
-	var ex ExternalModuleSource
+	var ex v1alpha1.ExternalModuleSource
 
 	err := sdk.FromUnstructured(obj, &ex)
 
@@ -76,9 +78,12 @@ func xxx(input *go_hook.HookInput, dc dependency.Container) error {
 
 	fmt.Println("SNAP", len(snap))
 
+	externalModulesDir := os.Getenv("EXTERNAL_MODULES_DIR")
+	fmt.Println("EXTERNAL DIR", externalModulesDir)
+
 	for _, sn := range snap {
-		ex := sn.(ExternalModuleSource)
-		sc := ExternalModuleSourceStatus{
+		ex := sn.(v1alpha1.ExternalModuleSource)
+		sc := v1alpha1.ExternalModuleSourceStatus{
 			SyncTime: ts,
 		}
 
@@ -107,55 +112,112 @@ func xxx(input *go_hook.HookInput, dc dependency.Container) error {
 
 		sc.Msg = ""
 		sc.AvailableModules = tags
-		updateSourceStatus(input, ex.Name, sc)
+		moduleErrors := make([]v1alpha1.ModuleError, 0)
 
 		// fetch release image
 		// TODO: get release channel from somewhere
 		const releaseChannel = "beta"
 
-		// TODO: check digest
 		// dev-registry.deckhouse.io/deckhouse/external-modules/echoserver/release
 		for _, moduleName := range tags {
-			regCli, _ = dc.GetRegistryClient(path.Join(ex.Spec.Registry.Repo, moduleName, "release"), opts...)
-			// TODO: save digest
-			img, err := regCli.Image(releaseChannel)
+			regCli, err = dc.GetRegistryClient(path.Join(ex.Spec.Registry.Repo, moduleName, "release"), opts...)
 			if err != nil {
-				// TODO: err
-				fmt.Println("ERROR2", err)
+				moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
+					Name:  moduleName,
+					Error: fmt.Errorf("fetch release image error: %v", err).Error(),
+				})
 				continue
 			}
 
-			digest, err := img.Digest()
+			img, err := regCli.Image(releaseChannel)
 			if err != nil {
-				// TODO: err
-				fmt.Println("ERROR22", err)
+				moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
+					Name:  moduleName,
+					Error: fmt.Errorf("fetch image error: %v", err).Error(),
+				})
 				continue
 			}
-			fmt.Println("DIGEST", moduleName, releaseChannel, digest)
+
+			// digest, err := img.Digest()
+			// if err != nil {
+			// 	moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
+			// 		Name:  moduleName,
+			// 		Error: fmt.Errorf("fetch digest error: %v", err).Error(),
+			// 	})
+			// 	continue
+			// }
+
+			// TODO: check digest
+			// TODO: save digest
 
 			meta, err := fetchModuleReleaseMetadata(img)
 			if err != nil {
-				fmt.Println("ERROR223", err)
+				moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
+					Name:  moduleName,
+					Error: fmt.Errorf("fetch release metadata error: %v", err).Error(),
+				})
 				continue
 			}
 
-			fmt.Println("GOT MODULE METADATA", meta)
-			regCli, _ = dc.GetRegistryClient(path.Join(ex.Spec.Registry.Repo, moduleName), opts...)
+			regCli, err = dc.GetRegistryClient(path.Join(ex.Spec.Registry.Repo, moduleName), opts...)
+			if err != nil {
+				moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
+					Name:  moduleName,
+					Error: fmt.Errorf("fetch module error: %v", err).Error(),
+				})
+				continue
+			}
 
 			img, err = regCli.Image(meta.Version.Original())
 			if err != nil {
-				return err
+				moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
+					Name:  moduleName,
+					Error: fmt.Errorf("fetch module version error: %v", err).Error(),
+				})
+				continue
 			}
-			err = copyModuleToFS("/tmp/bbbc", img)
+
+			err = copyModuleToFS(path.Join(externalModulesDir, moduleName, "v"+meta.Version.String()), img)
 			if err != nil {
-				return err
+				moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
+					Name:  moduleName,
+					Error: fmt.Errorf("copy module error: %v", err).Error(),
+				})
+				continue
 			}
+
+			createRelease(input, moduleName, meta.Version.String())
 		}
+
+		sc.ModuleErrors = moduleErrors
+		if len(sc.ModuleErrors) > 0 {
+			sc.Msg = "Some errors occurred. Inspect status for details"
+		}
+		updateSourceStatus(input, ex.Name, sc)
 		// end fetch release
-		fmt.Println("COPIED")
 	}
 
 	return nil
+}
+
+func createRelease(input *go_hook.HookInput, moduleName, version string) {
+	rl := &v1alpha1.ExternalModuleRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ExternalModuleRelease",
+			APIVersion: "deckhouse.io/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        fmt.Sprintf("%s-v%s", moduleName, version),
+			Annotations: make(map[string]string),
+			Labels:      map[string]string{"module": moduleName},
+		},
+		Spec: v1alpha1.ExternalModuleReleaseSpec{
+			ModuleName: moduleName,
+			Version:    "v" + version,
+		},
+	}
+
+	input.PatchCollector.Create(rl, object_patch.UpdateIfExists())
 }
 
 func copyModuleToFS(rootPath string, img v1.Image) error {
@@ -291,37 +353,10 @@ type moduleReleaseMetadata struct {
 	Version semver.Version `json:"version"`
 }
 
-func updateSourceStatus(input *go_hook.HookInput, name string, sc ExternalModuleSourceStatus) {
-	st := map[string]ExternalModuleSourceStatus{
+func updateSourceStatus(input *go_hook.HookInput, name string, sc v1alpha1.ExternalModuleSourceStatus) {
+	st := map[string]v1alpha1.ExternalModuleSourceStatus{
 		"status": sc,
 	}
 
 	input.PatchCollector.MergePatch(st, "deckhouse.io/v1alpha1", "ExternalModuleSource", "", name, object_patch.WithSubresource("/status"))
-}
-
-type ExternalModuleSource struct {
-	metav1.TypeMeta `json:",inline"`
-	// Standard object's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	// Spec defines the behavior of an ExternalModuleSource.
-	Spec ExternalModuleSourceSpec `json:"spec"`
-
-	// Status of an ExternalModuleSource.
-	Status ExternalModuleSourceStatus `json:"status,omitempty"`
-}
-
-type ExternalModuleSourceSpec struct {
-	Registry struct {
-		Repo      string `json:"repo"`
-		DockerCFG string `json:"dockerCfg"`
-	} `json:"registry"`
-}
-
-type ExternalModuleSourceStatus struct {
-	SyncTime         time.Time `json:"syncTime,omitempty"`
-	AvailableModules []string  `json:"availableModules,omitempty"`
-	Msg              string    `json:"message,omitempty"`
 }

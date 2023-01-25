@@ -49,6 +49,15 @@ spec:
                     type: string
                 message:
                   type: string
+                moduleErrors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      error:
+                        type: string
       subresources:
         status: {}
       additionalPrinterColumns:
