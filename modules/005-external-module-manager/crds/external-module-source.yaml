@@ -28,10 +28,12 @@ spec:
             spec:
               type: object
               required:
-                - repo
+                - registry
               properties:
                 registry:
                   type: object
+                  required:
+                    - repo
                   properties:
                     repo:
                       type: string
