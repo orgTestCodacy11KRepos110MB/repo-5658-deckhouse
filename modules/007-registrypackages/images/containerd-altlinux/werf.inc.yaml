@@ -50,5 +50,5 @@ shell:
   setup:
   - DISTRO="$(awk -F "-" '{print $NF}' <<< "{{ $version | replace "=" "_" }}")"
   - VERSION="$(sed "s/-${DISTRO}//" <<< "{{ $version | replace "=" "_" }}")"
-  - curl -sfL http://ftp.altlinux.org/pub/distributions/ALTLinux/p10/branch/files/x86_64/RPMS/containerd-1.6.9-alt1.x86_64.rpm --output /containerd_amd64.deb #TODO
+  - curl -sfL http://ftp.altlinux.org/pub/distributions/ALTLinux/p10/branch/files/x86_64/RPMS/containerd-1.6.9-alt1.x86_64.rpm --output /containerd_amd64.deb #TODO2
 {{- end }}
