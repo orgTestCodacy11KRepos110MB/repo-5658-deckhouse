@@ -67,6 +67,10 @@ for ID in $ID_LIKE; do
       >&2 echo "WARNING: Trying to use debian bundle as default for: ${PRETTY_NAME}"
       echo "debian" && exit 0
     ;;
+    altlinux)
+      >&2 echo "WARNING: Trying to use altlinux bundle as default for: ${PRETTY_NAME}"
+      echo "altlinux" && exit 0
+    ;;
   esac
 done
 {{- /*
