@@ -6,6 +6,7 @@ ciliumHubbleEnabled: false
 controlPlaneManagerEnabled: true
 dashboardEnabled: true
 deckhouseConfigEnabled: true
+externalModuleManagerEnabled: true
 deckhouseEnabled: true
 deckhouseWebEnabled: true
 deschedulerEnabled: true

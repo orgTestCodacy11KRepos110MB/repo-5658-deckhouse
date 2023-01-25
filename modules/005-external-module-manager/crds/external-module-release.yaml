@@ -36,7 +36,7 @@ spec:
                 version:
                   type: string
                   description: Module version.
-                  example: 'v1.24.20'
+                  example: 'v1.0.0'
                 applyAfter:
                   type: string
                   description: Marks release as a part of canary release. This release will be delayed until this time.
