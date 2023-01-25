@@ -28,7 +28,7 @@ spec:
             spec:
               type: object
               required:
-                - version
+                - repo
               properties:
                 registry:
                   type: object
