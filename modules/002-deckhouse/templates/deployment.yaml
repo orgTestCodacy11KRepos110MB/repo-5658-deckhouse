@@ -175,7 +175,6 @@ spec:
           - mountPath: /.kube
             name: kube
           - mountPath: /deckhouse/external-modules
-            mountPropagation: "Bidirectional"
             name: external-modules
       hostNetwork: true
 {{- if .Values.global.clusterIsBootstrapped }}
