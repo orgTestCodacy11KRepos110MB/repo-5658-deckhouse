@@ -56,12 +56,12 @@ var _ = sdk.RegisterFunc(&go_hook.HookConfig{
 			FilterFunc:          filterSource,
 		},
 	},
-	// Schedule: []go_hook.ScheduleConfig{
-	// 	{
-	// 		Name:    "check_deckhouse_release",
-	// 		Crontab: "* * * * *", // every minute
-	// 	},
-	// },
+	Schedule: []go_hook.ScheduleConfig{
+		{
+			Name:    "check_deckhouse_release",
+			Crontab: "*/3 * * * *", // TODO: make every 15 minutes
+		},
+	},
 }, dependency.WithExternalDependencies(xxx))
 
 func filterSource(obj *unstructured.Unstructured) (go_hook.FilterResult, error) {

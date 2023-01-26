@@ -10,7 +10,7 @@ spec:
   scope: Cluster
   names:
     plural: externalmodulereleases
-    singular: dexternalmodulerelease
+    singular: externalmodulerelease
     kind: ExternalModuleRelease
   preserveUnknownFields: false
   versions:
