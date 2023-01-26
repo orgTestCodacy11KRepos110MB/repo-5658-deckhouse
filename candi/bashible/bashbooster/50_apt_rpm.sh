@@ -39,7 +39,7 @@ bb-apt-rpm-repo-add() {
     if ! cat /etc/apt/sources.list /etc/apt/sources.list.d/* 2> /dev/null | sed -E -e 's/#.*//g' -e 's/[ \t]+/;;/g' | grep -q $REPO_HASH
     then
         echo "${@}" >> "/etc/apt/sources.list.d/${REPO_DOMAIN}.list"
-        bb-flag-unset apt-updated
+        bb-flag-unset apt-rpm-updated
     fi
 }
 
@@ -60,17 +60,17 @@ bb-apt-rpm-package?() {
 
 bb-apt-rpm-update() {
     export DEBIAN_FRONTEND=noninteractive
-    bb-flag? apt-updated && return 0
+    bb-flag? apt-rpm-updated && return 0
     bb-log-info 'Updating apt cache'
     apt-get update
-    bb-flag-set apt-updated
+    bb-flag-set apt-rpm-updated
 }
 
 bb-apt-rpm-dist-upgrade() {
     export DEBIAN_FRONTEND=noninteractive
-    bb-apt-update
+    bb-apt-rpm-update
     bb-log-info 'Processing dist-upgrade'
-    apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade -y
+    apt-get dist-upgrade -y
 }
 
 bb-apt-rpm-install() {
@@ -99,9 +99,9 @@ bb-apt-rpm-install() {
 
     if [ "${#PACKAGES_TO_INSTALL[@]}" -gt "0" ]
     then
-        bb-apt-update
+        bb-apt-rpm-update
         bb-log-info "Installing packages '${PACKAGES_TO_INSTALL[@]}'"
-        apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install --allow-change-held-packages --allow-downgrades -y ${PACKAGES_TO_INSTALL[@]}
+        apt-getinstall --allow-change-held-packages --allow-downgrades -y ${PACKAGES_TO_INSTALL[@]}
         bb-apt-hold ${PACKAGES_TO_INSTALL[@]}
         bb-exit-on-error "Failed to install packages '${PACKAGES_TO_INSTALL[@]}'"
         printf '%s\n' "${PACKAGES_TO_INSTALL[@]}" >> "$BB_APT_UNHANDLED_PACKAGES_STORE"
@@ -137,7 +137,7 @@ bb-apt-rpm-remove() {
 bb-apt-rpm-autoremove() {
     export DEBIAN_FRONTEND=noninteractive
     bb-log-info 'Autoremoving unused packages'
-    apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" --purge -y autoremove
+    apt-get --purge -y autoremove
 }
 
 bb-apt-rpm-hold?() {
