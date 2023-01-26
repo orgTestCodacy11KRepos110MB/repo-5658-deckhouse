@@ -101,7 +101,7 @@ bb-apt-rpm-install() {
     then
         bb-apt-rpm-update
         bb-log-info "Installing packages '${PACKAGES_TO_INSTALL[@]}'"
-        apt-get install --allow-change-held-packages --allow-downgrades -y ${PACKAGES_TO_INSTALL[@]}
+        apt-get install --allow-downgrades -y ${PACKAGES_TO_INSTALL[@]}
         bb-apt-hold ${PACKAGES_TO_INSTALL[@]}
         bb-exit-on-error "Failed to install packages '${PACKAGES_TO_INSTALL[@]}'"
         printf '%s\n' "${PACKAGES_TO_INSTALL[@]}" >> "$BB_APT_UNHANDLED_PACKAGES_STORE"
@@ -126,7 +126,7 @@ bb-apt-rpm-remove() {
 
     if [ "${#PACKAGES_TO_REMOVE[@]}" -gt 0 ]; then
         bb-log-info "Removing packages '${PACKAGES_TO_REMOVE[@]}'"
-        apt-get remove -y --allow-change-held-packages ${PACKAGES_TO_REMOVE[@]}
+        apt-get remove -y ${PACKAGES_TO_REMOVE[@]}
         bb-exit-on-error "Failed to remove packages '${PACKAGES_TO_REMOVE[@]}'"
         for i in ${PACKAGES_TO_REMOVE[@]}; do
             bb-event-fire "bb-package-removed" "$i"
