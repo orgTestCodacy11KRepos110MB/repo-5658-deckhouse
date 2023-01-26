@@ -194,5 +194,5 @@ spec:
       - name: external-modules
         hostPath:
           path: /var/lib/deckhouse/external-modules
-          type: DirectoryOrCreate
+          type: Directory
 
