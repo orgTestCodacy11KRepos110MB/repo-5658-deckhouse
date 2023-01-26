@@ -52,7 +52,8 @@ fi
 
 if [[ "$should_install_containerd" == true ]]; then
 
-{{- $altlinuxName := dict "18.04" "Bionic" "20.04" "Focal" "22.04" "Jammy"}}
+#TODO
+{{- $altlinuxName := dict "22.04" "Jammy"}}
 {{- range $key, $value := index .k8s .kubernetesVersion "bashible" "altlinux" }}
   {{- $altlinuxVersion := toString $key }}
   if bb-is-altlinux-version? {{ $altlinuxVersion }} ; then
