@@ -68,10 +68,17 @@ func filterSource(obj *unstructured.Unstructured) (go_hook.FilterResult, error) 
 	var ex v1alpha1.ExternalModuleSource
 
 	err := sdk.FromUnstructured(obj, &ex)
-	// ignore status
-	ex.Status = v1alpha1.ExternalModuleSourceStatus{}
 
-	return ex, err
+	// remove unused fields
+	newex := v1alpha1.ExternalModuleSource{
+		TypeMeta: ex.TypeMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name: ex.Name,
+		},
+		Spec: ex.Spec,
+	}
+
+	return newex, err
 }
 
 func xxx(input *go_hook.HookInput, dc dependency.Container) error {
