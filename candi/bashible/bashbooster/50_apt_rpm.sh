@@ -101,7 +101,7 @@ bb-apt-rpm-install() {
     then
         bb-apt-rpm-update
         bb-log-info "Installing packages '${PACKAGES_TO_INSTALL[@]}'"
-        apt-getinstall --allow-change-held-packages --allow-downgrades -y ${PACKAGES_TO_INSTALL[@]}
+        apt-get install --allow-change-held-packages --allow-downgrades -y ${PACKAGES_TO_INSTALL[@]}
         bb-apt-hold ${PACKAGES_TO_INSTALL[@]}
         bb-exit-on-error "Failed to install packages '${PACKAGES_TO_INSTALL[@]}'"
         printf '%s\n' "${PACKAGES_TO_INSTALL[@]}" >> "$BB_APT_UNHANDLED_PACKAGES_STORE"
