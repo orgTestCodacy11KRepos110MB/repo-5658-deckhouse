@@ -68,6 +68,8 @@ func filterSource(obj *unstructured.Unstructured) (go_hook.FilterResult, error) 
 	var ex v1alpha1.ExternalModuleSource
 
 	err := sdk.FromUnstructured(obj, &ex)
+	// ignore status
+	ex.Status = v1alpha1.ExternalModuleSourceStatus{}
 
 	return ex, err
 }
