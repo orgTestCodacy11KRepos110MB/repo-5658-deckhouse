@@ -13,4 +13,4 @@
 # limitations under the License.
 
 mkdir -p /var/lib/deckhouse/external-modules
-chmod 755 /var/lib/deckhouse/external-modules
+chmod 775 /var/lib/deckhouse/external-modules
