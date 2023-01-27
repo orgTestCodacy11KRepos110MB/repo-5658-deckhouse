@@ -12,7 +12,7 @@
 {{- end }}
 {{- range $value := $containerd_versions | uniq }}
   {{- $version := $value | toString }}
-  {{- $image_version := $version | replace "containerd.io=" "" | replace "." "-" | replace "~" "-" }}
+  {{- $image_version := $version | replace "containerd=" "" | replace "." "-" | replace "~" "-" }}
 ---
 image: {{ $.ModuleName }}/{{ $.ImageName }}-{{ $image_version }}
 from: {{ $.Images.BASE_SCRATCH }}
