@@ -1,4 +1,4 @@
-# Copyright 2021 Flant JSC
+# Copyright 2022 Flant JSC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,6 @@ fi
 
 echo "blacklist floppy" > /etc/modprobe.d/blacklist-floppy.conf
 if lsmod | grep floppy -q ; then
-    update-initramfs -u
+    make-initrd
     bb-flag-set reboot
 fi
