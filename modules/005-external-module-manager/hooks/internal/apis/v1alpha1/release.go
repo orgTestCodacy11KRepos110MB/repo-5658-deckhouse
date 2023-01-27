@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -51,7 +52,7 @@ type ExternalModuleRelease struct {
 
 type ExternalModuleReleaseSpec struct {
 	ModuleName   string            `json:"moduleName"`
-	Version      string            `json:"version,omitempty"`
+	Version      *semver.Version   `json:"version,omitempty"`
 	ApplyAfter   *time.Time        `json:"applyAfter,omitempty"`
 	Requirements map[string]string `json:"requirements,omitempty"`
 }

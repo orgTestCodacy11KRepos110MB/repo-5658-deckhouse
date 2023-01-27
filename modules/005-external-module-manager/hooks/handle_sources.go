@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Flant JSC
+Copyright 2023 Flant JSC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ var _ = sdk.RegisterFunc(&go_hook.HookConfig{
 			Crontab: "*/3 * * * *", // TODO: make every 15 minutes
 		},
 	},
-}, dependency.WithExternalDependencies(xxx))
+}, dependency.WithExternalDependencies(handleSource))
 
 func filterSource(obj *unstructured.Unstructured) (go_hook.FilterResult, error) {
 	var ex v1alpha1.ExternalModuleSource
@@ -81,14 +81,11 @@ func filterSource(obj *unstructured.Unstructured) (go_hook.FilterResult, error) 
 	return newex, err
 }
 
-func xxx(input *go_hook.HookInput, dc dependency.Container) error {
+func handleSource(input *go_hook.HookInput, dc dependency.Container) error {
 	ts := time.Now().UTC()
 	snap := input.Snapshots["sources"]
 
-	fmt.Println("SNAP", len(snap))
-
 	externalModulesDir := os.Getenv("EXTERNAL_MODULES_DIR")
-	fmt.Println("EXTERNAL DIR", externalModulesDir)
 
 	for _, sn := range snap {
 		ex := sn.(v1alpha1.ExternalModuleSource)
@@ -159,6 +156,8 @@ func xxx(input *go_hook.HookInput, dc dependency.Container) error {
 			// TODO: check digest
 			// TODO: save digest
 
+			// TODO: check module exists on filesystem
+
 			meta, err := fetchModuleReleaseMetadata(img)
 			if err != nil {
 				moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
@@ -195,7 +194,7 @@ func xxx(input *go_hook.HookInput, dc dependency.Container) error {
 				continue
 			}
 
-			createRelease(input, moduleName, meta.Version.String())
+			createRelease(input, moduleName, meta.Version)
 		}
 
 		sc.ModuleErrors = moduleErrors
@@ -209,7 +208,7 @@ func xxx(input *go_hook.HookInput, dc dependency.Container) error {
 	return nil
 }
 
-func createRelease(input *go_hook.HookInput, moduleName, version string) {
+func createRelease(input *go_hook.HookInput, moduleName string, version *semver.Version) {
 	rl := &v1alpha1.ExternalModuleRelease{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ExternalModuleRelease",
@@ -222,7 +221,7 @@ func createRelease(input *go_hook.HookInput, moduleName, version string) {
 		},
 		Spec: v1alpha1.ExternalModuleReleaseSpec{
 			ModuleName: moduleName,
-			Version:    "v" + version,
+			Version:    version,
 		},
 	}
 
@@ -359,7 +358,7 @@ func fetchModuleReleaseMetadata(img v1.Image) (moduleReleaseMetadata, error) {
 }
 
 type moduleReleaseMetadata struct {
-	Version semver.Version `json:"version"`
+	Version *semver.Version `json:"version"`
 }
 
 func updateSourceStatus(input *go_hook.HookInput, name string, sc v1alpha1.ExternalModuleSourceStatus) {
