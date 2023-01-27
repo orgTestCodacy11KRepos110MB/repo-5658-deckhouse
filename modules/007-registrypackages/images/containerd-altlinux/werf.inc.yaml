@@ -5,9 +5,6 @@
     {{- if $versions.containerd.desiredVersion }}
       {{- $containerd_versions = printf "%s-%s" $versions.containerd.desiredVersion (index $altlinux_versions $key) | toString | append $containerd_versions }}
     {{- end}}
-    {{- if $versions.docker.containerd.desiredVersion }}
-      {{- $containerd_versions = printf "%s-%s" $versions.docker.containerd.desiredVersion (index $altlinux_versions $key) | toString | append $containerd_versions }}
-    {{- end}}
   {{- end }}
 {{- end }}
 {{- range $value := $containerd_versions | uniq }}
