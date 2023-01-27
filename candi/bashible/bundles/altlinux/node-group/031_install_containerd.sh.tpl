@@ -53,13 +53,15 @@ fi
 if [[ "$should_install_containerd" == true ]]; then
 
 #TODO
-{{- $altlinuxName := dict "22.04" "Jammy"}}
 {{- range $key, $value := index .k8s .kubernetesVersion "bashible" "altlinux" }}
   {{- $altlinuxVersion := toString $key }}
   if bb-is-altlinux-version? {{ $altlinuxVersion }} ; then
-    containerd_tag="{{- index $.images.registrypackages (printf "containerdAltlinux%s%s" ($value.containerd.desiredVersion | replace "containerd=" "" | replace "." "_" | replace "-" "_" | camelcase) (index $altlinuxName $altlinuxVersion)) }}"
+    containerd_tag="{{- index $.images.registrypackages (printf "containerdAltlinux%s" ($value.containerd.desiredVersion | replace "containerd-" "" | replace "." "_" | replace "-" "_" | camelcase )) }}"
   fi
 {{- end }}
+
+
+
 
   bb-rp-install "containerd:${containerd_tag}"
 fi
