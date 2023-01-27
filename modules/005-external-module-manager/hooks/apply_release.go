@@ -65,12 +65,14 @@ func applyModuleRelease(input *go_hook.HookInput) error {
 			continue
 		}
 		rel := sn.(enqueueRelease)
-		moduleReleases[rel.Module] = append(moduleReleases[rel.Module], rel)
-
 		if rel.Status == "" {
 			rel.Status = v1alpha1.PhasePending
 		}
+
+		moduleReleases[rel.Module] = append(moduleReleases[rel.Module], rel)
 	}
+
+	fmt.Println("RELEASESSS", moduleReleases)
 
 	for module, releases := range moduleReleases {
 		sort.Sort(byReleaseVersion(releases))
