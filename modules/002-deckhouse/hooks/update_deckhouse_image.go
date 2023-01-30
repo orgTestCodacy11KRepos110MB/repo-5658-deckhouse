@@ -164,7 +164,10 @@ func updateDeckhouse(input *go_hook.HookInput, dc dependency.Container) error {
 
 	// initialize deckhouseUpdater
 	approvalMode := input.Values.Get("deckhouse.update.mode").String()
-	deckhouseUpdater := updater.NewDeckhouseUpdater(input, approvalMode, releaseData, deckhousePod.Ready, deckhousePod.isBootstrapImage())
+	deckhouseUpdater, err := updater.NewDeckhouseUpdater(input, approvalMode, releaseData, deckhousePod.Ready, deckhousePod.isBootstrapImage())
+	if err != nil {
+		return fmt.Errorf("initializing deckhouse updater: %v", err)
+	}
 
 	if deckhousePod.Ready {
 		input.MetricsCollector.Expire(metricUpdatingGroup)
@@ -384,7 +387,9 @@ func tagUpdate(input *go_hook.HookInput, dc dependency.Container, deckhousePod *
 	repo := deckhousePod.Image[:imageSplitIndex]
 	tag := deckhousePod.Image[imageSplitIndex+1:]
 
-	regClient, err := dc.GetRegistryClient(repo, cr.WithCA(getCA(input)), cr.WithInsecureSchema(isHTTP(input)))
+	dockerCfg := input.Values.Get("global.modulesImages.registry.dockercfg").String()
+
+	regClient, err := dc.GetRegistryClient(repo, cr.WithCA(getCA(input)), cr.WithInsecureSchema(isHTTP(input)), cr.WithAuth(dockerCfg))
 	if err != nil {
 		input.LogEntry.Errorf("Registry (%s) client init failed: %s", repo, err)
 		return nil
