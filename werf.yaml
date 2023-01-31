@@ -576,6 +576,12 @@ shell:
 ---
 artifact: release-channel-version-artifact
 from: {{ .Images.BASE_ALPINE }}
+dependencies:
+  - image: dev
+    before: setup
+    imports:
+      - type: ImageDigest
+        targetEnv: deckhouseImageDigest
 shell:
   beforeInstall:
     - apk add --no-cache curl
@@ -584,7 +590,7 @@ shell:
   install:
     - |
       version="{{ env "CI_COMMIT_REF_NAME" }}"
-      yq w /deckhouse/release.yaml version $version | yq r - -j > version.json
+      yq w /deckhouse/release.yaml version $version digest $deckhouseImageDigest  | yq r - -j > version.json
       # changelog exists only for tags, we have to skip it for branches
       {{- $changelog := index (.Files.Glob "CHANGELOG/CHANGELOG-*") (printf "CHANGELOG/CHANGELOG-%s.yml" (env "CI_COMMIT_REF_NAME")) }}
       {{ if $changelog }}

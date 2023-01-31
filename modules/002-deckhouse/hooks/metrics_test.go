@@ -17,10 +17,11 @@ limitations under the License.
 package hooks
 
 import (
-	. "github.com/deckhouse/deckhouse/testing/hooks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/utils/pointer"
+
+	. "github.com/deckhouse/deckhouse/testing/hooks"
 )
 
 var _ = Describe("Modules :: deckhouse :: hooks :: metrics ", func() {

@@ -22,11 +22,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/deckhouse/deckhouse/go_lib/dependency"
-	"github.com/deckhouse/deckhouse/go_lib/dependency/cr"
-	"github.com/deckhouse/deckhouse/go_lib/hooks/update"
-	"github.com/deckhouse/deckhouse/modules/002-deckhouse/hooks/internal/apis/v1alpha1"
-	"github.com/deckhouse/deckhouse/modules/002-deckhouse/hooks/internal/updater"
 	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
 	"github.com/flant/addon-operator/pkg/module_manager/go_hook/metrics"
 	"github.com/flant/addon-operator/sdk"
@@ -36,6 +31,12 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/pointer"
+
+	"github.com/deckhouse/deckhouse/go_lib/dependency"
+	"github.com/deckhouse/deckhouse/go_lib/dependency/cr"
+	"github.com/deckhouse/deckhouse/go_lib/hooks/update"
+	"github.com/deckhouse/deckhouse/modules/002-deckhouse/hooks/internal/apis/v1alpha1"
+	"github.com/deckhouse/deckhouse/modules/002-deckhouse/hooks/internal/updater"
 )
 
 var _ = sdk.RegisterFunc(&go_hook.HookConfig{

@@ -30,11 +30,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/deckhouse/deckhouse/go_lib/certificate"
-	. "github.com/deckhouse/deckhouse/testing/hooks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"
+
+	"github.com/deckhouse/deckhouse/go_lib/certificate"
+	. "github.com/deckhouse/deckhouse/testing/hooks"
 )
 
 const (

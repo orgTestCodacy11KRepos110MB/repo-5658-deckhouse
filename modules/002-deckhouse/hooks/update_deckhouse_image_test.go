@@ -23,14 +23,15 @@ import (
 	"net/http/httptest"
 	"strings"
 
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"k8s.io/utils/pointer"
+
 	"github.com/deckhouse/deckhouse/go_lib/dependency"
 	"github.com/deckhouse/deckhouse/go_lib/dependency/cr"
 	"github.com/deckhouse/deckhouse/go_lib/dependency/requirements"
 	"github.com/deckhouse/deckhouse/modules/002-deckhouse/hooks/internal/updater"
 	. "github.com/deckhouse/deckhouse/testing/hooks"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"k8s.io/utils/pointer"
 )
 
 var _ = Describe("Modules :: deckhouse :: hooks :: update deckhouse image ::", func() {
