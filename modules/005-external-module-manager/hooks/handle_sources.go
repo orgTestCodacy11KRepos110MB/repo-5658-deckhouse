@@ -120,9 +120,12 @@ func handleSource(input *go_hook.HookInput, dc dependency.Container) error {
 	ts := time.Now().UTC()
 
 	checksumCM := input.Snapshots["checksum"]
-	sourcesChecksum := make(map[string][]byte)
+	var sourcesChecksum map[string][]byte
 	if len(checksumCM) > 0 {
 		sourcesChecksum = checksumCM[0].(map[string][]byte)
+		if len(sourcesChecksum) == 0 {
+			sourcesChecksum = make(map[string][]byte, 0)
+		}
 	}
 
 	snap := input.Snapshots["sources"]
