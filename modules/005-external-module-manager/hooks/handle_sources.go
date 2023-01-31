@@ -33,7 +33,9 @@ import (
 	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
 	"github.com/flant/addon-operator/sdk"
 	"github.com/flant/shell-operator/pkg/kube/object_patch"
+	"github.com/flant/shell-operator/pkg/kube_events_manager/types"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/pointer"
@@ -45,6 +47,11 @@ import (
 	"github.com/deckhouse/deckhouse/go_lib/dependency"
 )
 
+const (
+	// TODO: get release channel from somewhere
+	releaseChannel = "alpha"
+)
+
 var _ = sdk.RegisterFunc(&go_hook.HookConfig{
 	Queue: "/modules/external-module-source/sources",
 	Kubernetes: []go_hook.KubernetesConfig{
@@ -54,6 +61,23 @@ var _ = sdk.RegisterFunc(&go_hook.HookConfig{
 			Kind:                "ExternalModuleSource",
 			ExecuteHookOnEvents: pointer.Bool(true),
 			FilterFunc:          filterSource,
+		},
+		{
+			// d8-external-modules-checksums
+			Name:                         "checksum",
+			ApiVersion:                   "v1",
+			Kind:                         "ConfigMap",
+			ExecuteHookOnSynchronization: pointer.Bool(false),
+			ExecuteHookOnEvents:          pointer.Bool(false),
+			NameSelector: &types.NameSelector{
+				MatchNames: []string{"d8-external-modules-checksum"},
+			},
+			NamespaceSelector: &types.NamespaceSelector{
+				NameSelector: &types.NameSelector{
+					MatchNames: []string{"d8-system"},
+				},
+			},
+			FilterFunc: filterChecksumCM,
 		},
 	},
 	Schedule: []go_hook.ScheduleConfig{
@@ -81,8 +105,26 @@ func filterSource(obj *unstructured.Unstructured) (go_hook.FilterResult, error) 
 	return newex, err
 }
 
+func filterChecksumCM(obj *unstructured.Unstructured) (go_hook.FilterResult, error) {
+	var cm corev1.ConfigMap
+
+	err := sdk.FromUnstructured(obj, &cm)
+	if err != nil {
+		return nil, err
+	}
+
+	return cm.BinaryData, nil
+}
+
 func handleSource(input *go_hook.HookInput, dc dependency.Container) error {
 	ts := time.Now().UTC()
+
+	checksumCM := input.Snapshots["checksum"]
+	sourcesChecksum := make(map[string][]byte)
+	if len(checksumCM) > 0 {
+		sourcesChecksum = checksumCM[0].(map[string][]byte)
+	}
+
 	snap := input.Snapshots["sources"]
 
 	externalModulesDir := os.Getenv("EXTERNAL_MODULES_DIR")
@@ -121,8 +163,11 @@ func handleSource(input *go_hook.HookInput, dc dependency.Container) error {
 		moduleErrors := make([]v1alpha1.ModuleError, 0)
 
 		// fetch release image
-		// TODO: get release channel from somewhere
-		const releaseChannel = "beta"
+		modulesChecksum := make(map[string]string)
+
+		if data, ok := sourcesChecksum[ex.Name]; ok {
+			_ = json.Unmarshal(data, &modulesChecksum)
+		}
 
 		// dev-registry.deckhouse.io/deckhouse/external-modules/echoserver/release
 		for _, moduleName := range tags {
@@ -144,21 +189,27 @@ func handleSource(input *go_hook.HookInput, dc dependency.Container) error {
 				continue
 			}
 
-			// digest, err := img.Digest()
-			// if err != nil {
-			// 	moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
-			// 		Name:  moduleName,
-			// 		Error: fmt.Errorf("fetch digest error: %v", err).Error(),
-			// 	})
-			// 	continue
-			// }
+			digest, err := img.Digest()
+			if err != nil {
+				moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
+					Name:  moduleName,
+					Error: fmt.Errorf("fetch digest error: %v", err).Error(),
+				})
+				continue
+			}
 
-			// TODO: check digest
-			// TODO: save digest
+			if prev, ok := modulesChecksum[moduleName]; ok {
+				if prev == digest.String() {
+					input.LogEntry.Infof("Module %s checksum has not been changed. Ignoring.", moduleName)
+					continue
+				}
+			}
+
+			modulesChecksum[moduleName] = digest.String()
 
 			// TODO: check module exists on filesystem
 
-			meta, err := fetchModuleReleaseMetadata(img)
+			metadata, err := fetchModuleReleaseMetadata(img)
 			if err != nil {
 				moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
 					Name:  moduleName,
@@ -176,7 +227,7 @@ func handleSource(input *go_hook.HookInput, dc dependency.Container) error {
 				continue
 			}
 
-			img, err = regCli.Image(meta.Version.Original())
+			img, err = regCli.Image(metadata.Version.Original())
 			if err != nil {
 				moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
 					Name:  moduleName,
@@ -185,7 +236,7 @@ func handleSource(input *go_hook.HookInput, dc dependency.Container) error {
 				continue
 			}
 
-			err = copyModuleToFS(path.Join(externalModulesDir, moduleName, "v"+meta.Version.String()), img)
+			err = copyModuleToFS(path.Join(externalModulesDir, moduleName, "v"+metadata.Version.String()), img)
 			if err != nil {
 				moduleErrors = append(moduleErrors, v1alpha1.ModuleError{
 					Name:  moduleName,
@@ -194,16 +245,25 @@ func handleSource(input *go_hook.HookInput, dc dependency.Container) error {
 				continue
 			}
 
-			createRelease(input, moduleName, meta.Version)
+			createRelease(input, moduleName, metadata.Version)
 		}
 
 		sc.ModuleErrors = moduleErrors
 		if len(sc.ModuleErrors) > 0 {
 			sc.Msg = "Some errors occurred. Inspect status for details"
+		} else {
+			data, _ := json.Marshal(modulesChecksum)
+			sourcesChecksum[ex.Name] = data
 		}
 		updateSourceStatus(input, ex.Name, sc)
 		// end fetch release
 	}
+
+	patch := map[string]map[string][]byte{
+		"binaryData": sourcesChecksum,
+	}
+
+	input.PatchCollector.MergePatch(patch, "v1", "ConfigMap", "d8-system", "d8-external-modules-checksum", object_patch.IgnoreMissingObject())
 
 	return nil
 }
