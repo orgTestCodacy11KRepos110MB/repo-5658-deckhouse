@@ -1,0 +1,5 @@
+docs:
+  features:
+    - summary: Display the full parameter path in OpenAPI spec.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/3598
+
