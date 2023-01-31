@@ -20,10 +20,9 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/pkg/errors"
 )
 
 // +genclient
