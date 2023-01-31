@@ -18,6 +18,8 @@ package hooks
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/flant/addon-operator/pkg/module_manager/go_hook"
 	"github.com/flant/addon-operator/sdk"
 	"github.com/flant/shell-operator/pkg/kube/object_patch"
@@ -25,7 +27,6 @@ import (
 	gcr "github.com/google/go-containerregistry/pkg/name"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"strings"
 )
 
 const (
