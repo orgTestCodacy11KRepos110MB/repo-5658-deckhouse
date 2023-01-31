@@ -1,0 +1,17 @@
+candi:
+  fixes:
+    - summary: fix registry packages tmpdir cleanup
+      pull_request: https://github.com/deckhouse/deckhouse/pull/3709
+    - summary: refactor start_kubelet step
+      pull_request: https://github.com/deckhouse/deckhouse/pull/3647
+monitoring-kubernetes-control-plane:
+  fixes:
+    - summary: >-
+        Replaced `$__interval` with `$__range` variable so that the table properly displays results
+        over the whole time period
+      pull_request: https://github.com/deckhouse/deckhouse/pull/3687
+node-local-dns:
+  fixes:
+    - summary: Add label for `node-local-dns` daemonset to fix cilium connectivity tests.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/3620
+
