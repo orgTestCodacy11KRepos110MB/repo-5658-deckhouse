@@ -574,7 +574,7 @@ shell:
     echo '{{- env "CI_COMMIT_TAG" | default "dev" }}' > /deckhouse/version
 
 ---
-artifact: release-channel-version-artifact
+image: release-channel-version-artifact
 from: {{ .Images.BASE_ALPINE }}
 dependencies:
   - image: dev
@@ -607,7 +607,7 @@ git:
 image: release-channel-version
 from: {{ .Images.BASE_SCRATCH }}
 import:
-  - artifact: release-channel-version-artifact
+  - image: release-channel-version-artifact
     add: /
     to: /
     after: install
